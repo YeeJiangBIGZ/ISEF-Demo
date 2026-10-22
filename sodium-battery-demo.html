@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Walnut-Shell Hard-Carbon for Sodium-Ion Batteries | Science Fair Interactive Demo</title>
+
+<!--
+  SINGLE-FILE OFFLINE DEMO  -  no external dependencies
+  Everything (CSS + SVG + JS) is inline, so you can save this file
+  and open it locally with no internet connection.
+
+  QUICK TWEAK GUIDE (search the comments below):
+    * colors          -> the :root block in the style section
+    * animation speed -> the "SPEED" constant near the top of the script section
+    * texts           -> search the section you want, strings are plain text
+    * real lab photos -> search "TODO: replace with your real lab photo"
+-->
+
+<style>
+  /* ---------- Design tokens (edit colors here) ---------- */
+  :root{
+    --bg:        #f4f6fb;   /* page background            */
+    --card:      #ffffff;   /* card / panel background    */
+    --ink:       #1f2937;   /* main text                  */
+    --muted:     #64748b;   /* secondary text             */
+    --line:      #e2e8f0;   /* borders / dividers         */
+
+    --accent:    #0f766e;   /* teal-green (eco / project) */
+    --accent-soft:#e6f4f1;  /* tint of accent             */
+
+    --na:        #f5a623;   /* sodium ion gold            */
+    --na-deep:   #b45309;   /* sodium ion outline         */
+    --electron:  #2563eb;   /* electron blue              */
+
+    --anode:     #3f4752;   /* carbon electrode           */
+    --cathode:   #b7c1d4;   /* positive electrode (Na metal) */
+    --electrolyte:#dff1f7;  /* electrolyte fill           */
+
+    --radius:    16px;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{ margin:0; padding:0; }
+
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    /* clean, readable sans-serif stack (no external font needed) */
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
+                Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{ max-width:1100px; margin:0 auto; padding:32px 28px 60px; }
+
+  /* ---------- Header ---------- */
+  header.hero{ margin-bottom:34px; }
+  .badges{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .badge{
+    font-size:12px; font-weight:600; letter-spacing:.04em;
+    color:var(--accent); background:var(--accent-soft);
+    border:1px solid #bfe3dc; padding:4px 11px; border-radius:999px;
+  }
+  h1.title{
+    font-size:34px; line-height:1.2; margin:0 0 10px; letter-spacing:-.01em;
+  }
+  .subtitle{ color:var(--muted); font-size:16px; max-width:780px; margin:0; }
+
+  .nav{ display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
+  .nav a{
+    text-decoration:none; color:var(--ink); font-size:14px; font-weight:600;
+    background:var(--card); border:1px solid var(--line); border-radius:999px;
+    padding:8px 16px; transition:border-color .15s, transform .15s;
+  }
+  .nav a:hover{ border-color:var(--accent); color:var(--accent); transform:translateY(-1px); }
+
+  /* ---------- Section shells ---------- */
+  section{ margin-top:44px; }
+  .section-head{ display:flex; align-items:baseline; gap:14px; margin-bottom:6px; }
+  .section-num{
+    font-size:15px; font-weight:700; color:#fff; background:var(--accent);
+    width:30px; height:30px; border-radius:9px; display:inline-flex;
+    align-items:center; justify-content:center; flex:none;
+  }
+  h2{ font-size:24px; margin:0; }
+  .section-sub{ color:var(--muted); font-size:15px; margin:4px 0 18px; }
+
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px; }
+
+  /* ============================================================
+     SECTION 1 — battery animation
+  ============================================================ */
+  .legend{ display:flex; gap:18px; flex-wrap:wrap; margin-bottom:12px; }
+  .chip{ display:inline-flex; align-items:center; gap:8px; font-size:13.5px; color:var(--ink); }
+  .dot{ width:13px; height:13px; border-radius:50%; display:inline-block; flex:none; }
+  .dot.na{ background:var(--na); border:2px solid var(--na-deep); }
+  .dot.e { background:var(--electron); }
+
+  .diagram-wrap{
+    position:relative; background:linear-gradient(180deg,#ffffff,#f7fafd);
+    border:1px solid var(--line); border-radius:var(--radius); padding:12px; overflow:hidden;
+  }
+  .battery-svg{ display:block; width:100%; height:auto; }
+
+  /* SVG text styles (units are SVG user-units, 1000 wide viewBox) */
+  .lbl    { fill:var(--ink);  font-size:14px; font-weight:600; }
+  .lbl-sub{ fill:var(--muted); font-size:12px; }
+  .lbl-ital{ fill:var(--muted); font-size:12px; font-style:italic; }
+
+  /* SVG fill/stroke helpers — keep colors sourced from the :root tokens above */
+  .na-pt{ fill:var(--na); stroke:var(--na-deep); }
+  .e-pt { fill:var(--electron); }
+  .electrolyte-fill{ fill:var(--electrolyte); }
+  .anode-fill  { fill:var(--anode); }
+  .cathode-fill{ fill:var(--cathode); }
+  .stroke-accent{ stroke:var(--accent); }
+  .fill-muted  { fill:var(--muted); }
+
+  /* stored Na⁺ inside the anode pores fades in/out as the battery charges/discharges */
+  .na-store{ transition:opacity 3.5s ease; }
+
+  /* tooltip that appears when hovering the carbon electrode */
+  .tooltip{
+    position:absolute; width:300px; max-width:80%;
+    background:#12302b; color:#eafaf6; font-size:13px; line-height:1.45;
+    padding:11px 14px; border-radius:10px; pointer-events:none;
+    opacity:0; transform:translate(-50%,-6px); transition:opacity .18s, transform .18s;
+    box-shadow:0 8px 24px rgba(0,0,0,.22); z-index:5;
+  }
+  .tooltip.show{ opacity:1; transform:translate(-50%,-12px); }
+  .tooltip b{ color:#ffd88a; }
+
+  .controls{ display:flex; gap:12px; margin-top:16px; }
+  .btn{
+    font-family:inherit; font-size:15px; font-weight:700; letter-spacing:.02em;
+    padding:11px 26px; border-radius:999px; cursor:pointer;
+    border:2px solid var(--accent); background:#fff; color:var(--accent);
+    transition:background .15s, color .15s, transform .1s;
+  }
+  .btn:hover{ transform:translateY(-1px); }
+  .btn:active{ transform:translateY(0); }
+  .btn.active{ background:var(--accent); color:#fff; }
+  .btn#btnCharge.active{ background:#7c3aed; border-color:#7c3aed; } /* charge uses violet */
+
+  .status{
+    margin-top:14px; padding:13px 16px; border-radius:12px; font-size:15px; font-weight:600;
+    background:#eef2f7; color:var(--muted); border-left:4px solid #cbd5e1; min-height:24px;
+  }
+  .status.discharge{ background:#fff7e6; color:#92400e; border-left-color:var(--na); }
+  .status.charge   { background:#f3e8ff; color:#5b21b6; border-left-color:#7c3aed; }
+
+  .hint{ color:var(--muted); font-size:13px; margin-top:10px; }
+
+  /* ============================================================
+     SECTION 2 — experiment roadmap (horizontal scroll timeline)
+  ============================================================ */
+  .timeline-scroll{
+    overflow-x:auto; overflow-y:visible; padding:20px 8px 26px;
+    /* slim scrollbar */
+    scrollbar-width:thin; scrollbar-color:#c4cdd8 transparent;
+  }
+  .timeline-scroll::-webkit-scrollbar{ height:10px; }
+  .timeline-scroll::-webkit-scrollbar-thumb{ background:#c4cdd8; border-radius:999px; }
+  .timeline-scroll::-webkit-scrollbar-track{ background:transparent; }
+
+  .timeline-track{
+    display:flex; gap:18px; align-items:stretch;
+    min-width:max-content; position:relative; padding-top:6px;
+  }
+  /* connecting line drawn behind the cards */
+  .timeline-track::before{
+    content:""; position:absolute; top:37px; left:10px; right:10px; height:3px;
+    background:linear-gradient(90deg,var(--accent),#67c2b4,var(--accent));
+    border-radius:2px; opacity:.45;
+  }
+
+  .node{
+    position:relative; flex:0 0 250px; background:var(--card);
+    border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px 16px 14px; cursor:pointer; text-align:center;
+    transition:transform .18s, box-shadow .18s, border-color .18s;
+    box-shadow:0 1px 2px rgba(15,23,42,.06);
+  }
+  .node:hover{ transform:translateY(-4px); box-shadow:0 10px 26px rgba(15,23,42,.12); border-color:#bfe3dc; }
+  .node.open{ border-color:var(--accent); box-shadow:0 10px 28px rgba(15,118,110,.16); }
+
+  .node-num{
+    position:absolute; top:-8px; left:50%; transform:translateX(-50%);
+    width:26px; height:26px; border-radius:50%; background:var(--accent); color:#fff;
+    font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 0 3px #fff; z-index:2;
+  }
+
+  .node-icon{ width:52px; height:52px; margin:6px auto 4px; color:var(--accent); }
+  .node-icon svg{ width:100%; height:100%; }
+
+  .node h3{ font-size:15.5px; margin:6px 0 3px; line-height:1.25; }
+  .node .tag{ font-size:12.5px; color:var(--muted); margin:0 0 10px; }
+
+  /* placeholder image box — REPLACE WITH REAL LAB PHOTO (see comment in HTML) */
+  .ph{
+    height:74px; margin:0 0 10px; border-radius:10px; border:1.5px dashed #c3cdd9;
+    background:repeating-linear-gradient(45deg,#f6f8fb,#f6f8fb 8px,#eef2f7 8px,#eef2f7 16px);
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    color:#9aa7b8; font-size:12px; overflow:hidden;
+  }
+  .ph svg{ width:20px; height:20px; }
+  .ph img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+  .node-detail{
+    max-height:0; overflow:hidden; text-align:left; font-size:13px; color:#334155;
+    transition:max-height .4s ease; border-top:1px solid transparent;
+  }
+  .node.open .node-detail{ max-height:320px; border-top-color:var(--line); }
+  .node-detail .inner{ padding-top:10px; }
+  .node-detail p{ margin:0 0 8px; }
+  .node-detail strong{ color:var(--accent); }
+
+  .expand-hint{ font-size:12px; color:#9aa7b8; margin-top:2px; }
+  .node.open .expand-hint{ display:none; }
+
+  .timeline-note{ color:var(--muted); font-size:13px; margin-top:2px; }
+
+  /* ============================================================
+     SECTION 2 — supercritical CO₂ foaming demo
+  ============================================================ */
+  .dot.co2-gas{ background:#94a3b8; border:2px solid #64748b; }
+  .dot.co2-sc { background:#7c3aed; border:2px solid #5b21b6; }
+  .dot.carbon { background:#3f4752; border:2px solid #232a33; }
+
+  .btn-foam{ border-color:#7c3aed; color:#7c3aed; }
+  .btn-foam:hover{ border-color:#7c3aed; color:#7c3aed; }
+  .btn-foam.running{ background:#7c3aed; color:#fff; }
+
+  .foam-caption{
+    margin-top:14px; padding:13px 16px; border-radius:12px; font-size:15px; font-weight:600;
+    background:#f3e8ff; color:#5b21b6; border-left:4px solid #7c3aed; min-height:24px;
+  }
+  .foam-caption.result{ background:#e6f4f1; color:#0f4d46; border-left-color:var(--accent); }
+  .foam-caption .soft{ font-weight:400; }
+
+  .foam-summary{
+    margin-top:14px; padding:14px 16px; border-radius:12px;
+    background:var(--accent-soft); border:1px solid #bfe3dc; color:#0f4d46; font-size:15px;
+  }
+
+  /* highlighted "key" roadmap card (the core-innovation step) */
+  .node.key{ border:2px solid var(--accent); background:linear-gradient(180deg,#f0fbf8,#ffffff); box-shadow:0 6px 20px rgba(15,118,110,.14); }
+  .node.key:hover{ box-shadow:0 12px 28px rgba(15,118,110,.2); }
+  .key-badge{
+    display:inline-block; font-size:11px; font-weight:700; letter-spacing:.04em;
+    color:#fff; background:var(--accent); padding:3px 10px; border-radius:999px; margin:10px 0 4px;
+  }
+
+  /* ---------- Footer / disclaimer ---------- */
+  footer{ margin-top:44px; padding-top:18px; border-top:1px solid var(--line); }
+  .disclaimer{ color:var(--muted); font-size:12.5px; text-align:center; margin:0; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ======================= HEADER ======================= -->
+  <header class="hero">
+    <div class="badges">
+      <span class="badge">ISEF · Materials Science (MATS)</span>
+      <span class="badge">Supercritical CO₂ Foaming</span>
+      <span class="badge">Sodium-Ion Battery Anode</span>
+    </div>
+    <h1 class="title">Walnut-Shell Hard-Carbon for Sodium-Ion Batteries</h1>
+    <p class="subtitle">
+      Turning waste walnut shells into hierarchically porous hard carbon — and testing it as a
+      sodium-ion battery anode. Scroll to explore the battery animation, the supercritical CO₂ foaming
+      demo, and the full experiment roadmap.
+    </p>
+    <nav class="nav">
+      <a href="#battery">① Battery animation</a>
+      <a href="#foaming">② Supercritical CO₂ foaming</a>
+      <a href="#roadmap">③ Experiment roadmap</a>
+    </nav>
+  </header>
+
+  <!-- ============================================================
+       SECTION 1 — INTERACTIVE SODIUM-ION BATTERY ANIMATION
+  ============================================================ -->
+  <section id="battery">
+    <div class="section-head">
+      <span class="section-num">1</span>
+      <h2>How a sodium-ion half-cell works</h2>
+    </div>
+    <p class="section-sub">
+      A simplified 2-D schematic (not a physical simulation). Click <b>Discharge</b> or
+      <b>Charge</b>, then hover the carbon electrode for a note about our material.
+    </p>
+
+    <div class="card">
+      <div class="legend">
+        <span class="chip"><i class="dot na"></i>Sodium ion (Na⁺)</span>
+        <span class="chip"><i class="dot e"></i>Electron (e⁻)</span>
+      </div>
+
+      <div class="diagram-wrap" id="diagramWrap">
+        <svg class="battery-svg" viewBox="0 0 1000 460" role="img"
+             aria-label="Sodium-ion battery half-cell animation">
+
+          <!-- Reusable particle shapes (drawn centered on 0,0 so <use x,y> places their center) -->
+          <defs>
+            <g id="naIon">
+              <circle r="7" class="na-pt" stroke-width="1.6"/>
+              <text x="0" y="0" font-size="9" font-weight="700" fill="#7c2d12"
+                    text-anchor="middle" dominant-baseline="central">+</text>
+            </g>
+            <g id="electron">
+              <circle r="4" class="e-pt"/>
+            </g>
+          </defs>
+
+          <!-- Electrolyte background (fills the space between the two electrodes) -->
+          <rect x="222" y="150" width="556" height="210" rx="8" class="electrolyte-fill"/>
+
+          <!-- ===== Carbon negative electrode (ANODE) ===== -->
+          <rect x="70" y="150" width="150" height="210" rx="10" class="anode-fill" stroke="#232a33" stroke-width="2"/>
+          <!-- porous texture: scattered "pores" as lighter circles -->
+          <g fill="#55606e">
+            <circle cx="102" cy="192" r="6"/><circle cx="150" cy="204" r="6"/>
+            <circle cx="88"  cy="238" r="6"/><circle cx="162" cy="252" r="6"/>
+            <circle cx="108" cy="284" r="6"/><circle cx="152" cy="302" r="6"/>
+            <circle cx="92"  cy="330" r="6"/><circle cx="134" cy="344" r="6"/>
+            <circle cx="174" cy="322" r="6"/><circle cx="120" cy="252" r="6"/>
+          </g>
+          <!-- stored Na⁺ sitting inside pores (fades in on charge, out on discharge) -->
+          <g id="naStore" class="na-store">
+            <circle cx="102" cy="192" r="4.5" class="na-pt" stroke-width="1"/>
+            <circle cx="88"  cy="238" r="4.5" class="na-pt" stroke-width="1"/>
+            <circle cx="162" cy="252" r="4.5" class="na-pt" stroke-width="1"/>
+            <circle cx="108" cy="284" r="4.5" class="na-pt" stroke-width="1"/>
+            <circle cx="92"  cy="330" r="4.5" class="na-pt" stroke-width="1"/>
+            <circle cx="134" cy="344" r="4.5" class="na-pt" stroke-width="1"/>
+          </g>
+
+          <!-- ===== Positive electrode ===== -->
+          <rect x="780" y="150" width="150" height="210" rx="10" class="cathode-fill" stroke="#8b95a8" stroke-width="2"/>
+          <!-- subtle foil grid to suggest the metal electrode -->
+          <g stroke="#a5afc2" stroke-width="1.2">
+            <line x1="805" y1="150" x2="805" y2="360"/>
+            <line x1="855" y1="150" x2="855" y2="360"/>
+            <line x1="905" y1="150" x2="905" y2="360"/>
+            <line x1="780" y1="200" x2="930" y2="200"/>
+            <line x1="780" y1="250" x2="930" y2="250"/>
+            <line x1="780" y1="300" x2="930" y2="300"/>
+          </g>
+
+          <!-- ===== Separator (dashed membrane between the electrodes) ===== -->
+          <line x1="460" y1="150" x2="460" y2="360" stroke="#475569" stroke-width="3" stroke-dasharray="6 5"/>
+
+          <!-- ===== External circuit (top wire) ===== -->
+          <g stroke="#334155" stroke-width="3" fill="none" stroke-linecap="round">
+            <line x1="145" y1="150" x2="145" y2="55"/>   <!-- up from anode   -->
+            <line x1="145" y1="55"  x2="452" y2="55"/>   <!-- across, left    -->
+            <line x1="548" y1="55"  x2="855" y2="55"/>   <!-- across, right   -->
+            <line x1="855" y1="55"  x2="855" y2="150"/>  <!-- down to cathode -->
+          </g>
+
+          <!-- ===== Load (light bulb) — shown during DISCHARGE ===== -->
+          <g id="bulb">
+            <line x1="452" y1="55" x2="482" y2="55" stroke="#334155" stroke-width="3"/>
+            <circle cx="493" cy="55" r="11" fill="#fde047" stroke="#b45309" stroke-width="2"/>
+            <path d="M489 60 Q493 52 497 60" fill="none" stroke="#b45309" stroke-width="1.6"/>
+            <rect x="488" y="66" width="10" height="5" rx="1.2" fill="#64748b"/>
+            <line x1="504" y1="55" x2="548" y2="55" stroke="#334155" stroke-width="3"/>
+            <text x="493" y="86" text-anchor="middle" font-size="10.5" class="fill-muted" font-weight="600">Load</text>
+          </g>
+
+          <!-- ===== Charger (power supply) — shown during CHARGE ===== -->
+          <g id="charger" style="display:none;">
+            <line x1="452" y1="55" x2="468" y2="55" stroke="#334155" stroke-width="3"/>
+            <rect x="468" y="42" width="64" height="26" rx="5" fill="#fff" class="stroke-accent" stroke-width="2.5"/>
+            <path d="M479 51 v8 M475 55 h8" class="stroke-accent" stroke-width="2"/>          <!-- + -->
+            <path d="M516 55 h8" class="stroke-accent" stroke-width="2"/>                     <!-- - -->
+            <path d="M502 47 L497 54 L501 54 L498 61 L504 53 L500 53 Z" fill="#f59e0b"/>      <!-- bolt -->
+            <line x1="532" y1="55" x2="548" y2="55" stroke="#334155" stroke-width="3"/>
+            <text x="500" y="86" text-anchor="middle" font-size="10.5" class="fill-muted" font-weight="600">Charger</text>
+          </g>
+
+          <!-- Small arrow showing electron flow direction (flips on charge) -->
+          <g id="flowArrow" transform="translate(432,55)">
+            <polygon points="0,-5 8,0 0,5" class="e-pt"/>
+          </g>
+
+          <!-- Moving particles are created here by JS -->
+          <g id="ionLayer"></g>
+          <g id="electronLayer"></g>
+
+          <!-- ===== Labels ===== -->
+          <text x="500" y="22" text-anchor="middle" class="lbl">External circuit — electron (e⁻) flow</text>
+          <text x="460" y="138" text-anchor="middle" class="lbl">Separator</text>
+          <text x="340" y="180" text-anchor="middle" class="lbl-ital">Electrolyte</text>
+
+          <text x="145" y="386" text-anchor="middle" class="lbl">Carbon Negative Electrode</text>
+          <text x="145" y="404" text-anchor="middle" class="lbl-sub">(Anode · walnut-shell hard carbon)</text>
+
+          <text x="855" y="386" text-anchor="middle" class="lbl">Positive Electrode</text>
+          <text x="855" y="404" text-anchor="middle" class="lbl-sub">(Na metal)</text>
+
+          <!-- Invisible hit area over the anode for the hover tooltip -->
+          <rect id="anodeHit" x="70" y="150" width="150" height="210" fill="transparent"
+                style="pointer-events:all; cursor:help;"/>
+        </svg>
+
+        <!-- Tooltip shown on hover over the carbon electrode -->
+        <div id="tooltip" class="tooltip">
+          <b>This walnut-shell-derived hard-carbon</b> is our research material. Its pores act as
+          storage “warehouses” for sodium ions.
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="btnDischarge" class="btn">Discharge</button>
+        <button id="btnCharge" class="btn">Charge</button>
+      </div>
+
+      <div id="status" class="status">Click <b>Discharge</b> or <b>Charge</b> to start the animation.</div>
+      <p class="hint">Tip: hover your mouse over the dark carbon electrode to read about our material.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SECTION 2 — INTERACTIVE SUPERCRITICAL CO₂ FOAMING DEMO
+  ============================================================ -->
+  <section id="foaming">
+    <div class="section-head">
+      <span class="section-num">2</span>
+      <h2>Supercritical CO₂ foaming — how we engineer the pores</h2>
+    </div>
+    <p class="section-sub">
+      Our core treatment, in one animated sequence. Press <b>Start Foaming Process</b> and watch the
+      pressure, the CO₂ and the carbon pores change. Hover a carbon particle for a note.
+    </p>
+
+    <div class="card">
+      <div class="legend">
+        <span class="chip"><i class="dot co2-gas"></i>CO₂ gas</span>
+        <span class="chip"><i class="dot co2-sc"></i>Supercritical CO₂</span>
+        <span class="chip"><i class="dot carbon"></i>Porous hard carbon</span>
+      </div>
+
+      <div class="diagram-wrap" id="foamWrap">
+        <svg class="battery-svg" viewBox="0 0 1000 460" role="img"
+             aria-label="Supercritical CO2 foaming animation">
+
+          <!-- ===== Reactor vessel (thick-walled autoclave, cutaway view) ===== -->
+          <rect x="290" y="100" width="420" height="18" rx="6" fill="#64748b"/>
+          <rect x="300" y="110" width="400" height="290" rx="18" fill="#eef2f7" stroke="#475569" stroke-width="10"/>
+          <line x1="360" y1="58" x2="360" y2="100" stroke="#475569" stroke-width="8" stroke-linecap="round"/>
+          <text x="360" y="46" text-anchor="middle" class="lbl-sub">CO₂ inlet</text>
+
+          <!-- ===== Carbon particles (porous hard carbon, bottom of the vessel) ===== -->
+          <g>
+            <path d="M368 348 C352 316 366 276 400 274 C432 272 442 300 434 330 C428 356 388 362 368 348 Z" fill="#3f4752" stroke="#232a33" stroke-width="2"/>
+            <circle cx="388" cy="300" r="5" fill="#6b7684"/><circle cx="408" cy="316" r="4" fill="#6b7684"/><circle cx="392" cy="332" r="5" fill="#6b7684"/>
+            <circle cx="376" cy="286" r="4" fill="#6b7684"/><circle cx="420" cy="300" r="4" fill="#6b7684"/>
+          </g>
+          <g>
+            <path d="M465 362 C448 330 458 288 500 286 C540 284 556 314 548 344 C541 370 488 372 465 362 Z" fill="#3f4752" stroke="#232a33" stroke-width="2"/>
+            <circle cx="490" cy="308" r="5" fill="#6b7684"/><circle cx="510" cy="326" r="5" fill="#6b7684"/><circle cx="498" cy="346" r="4" fill="#6b7684"/><circle cx="522" cy="306" r="4" fill="#6b7684"/><circle cx="478" cy="326" r="4" fill="#6b7684"/>
+          </g>
+          <g>
+            <path d="M588 344 C572 306 586 274 620 276 C652 278 658 306 648 336 C640 358 606 362 588 344 Z" fill="#3f4752" stroke="#232a33" stroke-width="2"/>
+            <circle cx="606" cy="300" r="5" fill="#6b7684"/><circle cx="626" cy="316" r="4" fill="#6b7684"/><circle cx="608" cy="334" r="5" fill="#6b7684"/><circle cx="636" cy="296" r="4" fill="#6b7684"/><circle cx="588" cy="316" r="4" fill="#6b7684"/>
+          </g>
+
+          <!-- Dynamic layers created by JS: bubbles, newly-formed pores, expansion rings -->
+          <g id="foamBubbleLayer"></g>
+          <g id="foamPoreLayer"></g>
+          <g id="foamRingLayer"></g>
+
+          <!-- In-vessel stage tag (text updates during the animation) -->
+          <text id="foamStageTag" x="500" y="134" text-anchor="middle" class="lbl" fill="#475569">CO₂ gas</text>
+
+          <!-- ===== Pressure gauge (left) ===== -->
+          <circle cx="180" cy="205" r="52" fill="#fff" stroke="#475569" stroke-width="3"/>
+          <g stroke="#475569" stroke-width="2">
+            <g transform="rotate(-55 180 205)"><line x1="180" y1="153" x2="180" y2="160"/></g>
+            <g transform="rotate(-27 180 205)"><line x1="180" y1="153" x2="180" y2="160"/></g>
+            <g transform="rotate(0 180 205)"><line x1="180" y1="153" x2="180" y2="160"/></g>
+            <g transform="rotate(27 180 205)"><line x1="180" y1="153" x2="180" y2="160"/></g>
+            <g transform="rotate(55 180 205)"><line x1="180" y1="153" x2="180" y2="160"/></g>
+          </g>
+          <g id="foamNeedle" transform="rotate(-55 180 205)">
+            <line x1="180" y1="205" x2="180" y2="165" stroke="#dc2626" stroke-width="3.5" stroke-linecap="round"/>
+            <circle cx="180" cy="205" r="5" fill="#dc2626"/>
+          </g>
+          <text x="180" y="285" text-anchor="middle" class="lbl">Pressure</text>
+          <text id="foamPressText" x="180" y="303" text-anchor="middle" class="lbl-sub">0.1 MPa</text>
+
+          <!-- ===== Temperature readout (right) ===== -->
+          <text x="830" y="180" text-anchor="middle" class="lbl">Temperature</text>
+          <text id="foamTempText" x="830" y="202" text-anchor="middle" class="lbl" fill="#0f766e">25 °C</text>
+
+          <!-- Invisible hit area over the carbon particles for the hover tooltip -->
+          <rect id="foamCarbonHit" x="345" y="272" width="315" height="120" fill="transparent"
+                style="pointer-events:all; cursor:help;"/>
+        </svg>
+
+        <!-- Tooltip shown on hover over a carbon particle -->
+        <div id="foamTooltip" class="tooltip">Walnut-shell derived hard carbon, the material we modify in this research.</div>
+      </div>
+
+      <div class="controls">
+        <button id="btnFoam" class="btn btn-foam">Start Foaming Process</button>
+      </div>
+
+      <div id="foamCaption" class="foam-caption">CO₂ gas at normal temperature &amp; pressure (T &amp; P). Press the button to start foaming.</div>
+
+      <div class="foam-summary">
+        <strong>Supercritical CO₂ foaming is our core experimental variable.</strong> We use this
+        treatment to engineer the pore network of walnut-shell hard carbon, to improve sodium-ion
+        battery performance.
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SECTION 3 — INTERACTIVE EXPERIMENT ROADMAP
+  ============================================================ -->
+  <section id="roadmap">
+    <div class="section-head">
+      <span class="section-num">3</span>
+      <h2>Experiment roadmap — from walnut shell to battery test</h2>
+    </div>
+    <p class="section-sub">
+      Full workflow, step by step — the highlighted step 7 is our core treatment. Click any card to
+      expand what happens and why. Scroll sideways → to see every step.
+    </p>
+
+    <div class="card">
+      <div class="timeline-scroll">
+        <div class="timeline-track">
+
+          <!-- STEP 1 -->
+          <article class="node open">
+            <span class="node-num">1</span>
+            <div class="node-icon">
+              <svg viewBox="0 0 48 48">
+                <ellipse cx="24" cy="26" rx="15" ry="18" fill="#f0e4d0" stroke="#8a5a2b" stroke-width="2.5"/>
+                <path d="M24 8 C18 14 18 20 24 26 C30 32 30 38 24 44" fill="none" stroke="#8a5a2b" stroke-width="2"/>
+                <path d="M13 20 c-3 4 -3 10 0 14 M35 20 c3 4 3 10 0 14" fill="none" stroke="#8a5a2b" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3>Raw walnut shells</h3>
+            <p class="tag">Collect &amp; clean</p>
+            <!-- TODO: replace with your real lab photo, e.g.:
+                 <div class="ph"><img src="step1-walnut-shells.jpg" alt="Raw walnut shells"></div> -->
+            <div class="ph">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg>
+              <span>photo</span>
+            </div>
+            <div class="node-detail"><div class="inner">
+              <p><strong>What happens:</strong> waste walnut shells are collected and physically cleaned — the inner membrane, leftover kernel and dirt are stripped away.</p>
+              <p><strong>Purpose:</strong> obtain clean, impurity-free biomass before any chemical or thermal steps.</p>
+            </div></div>
+            <div class="expand-hint">click to expand</div>
+          </article>
+
+          <!-- STEP 2 -->
+          <article class="node">
+            <span class="node-num">2</span>
+            <div class="node-icon">
+              <svg viewBox="0 0 48 48">
+                <path d="M17 6 h14 M19 6 v6 l-6 26 h22 l-6 -26 v-6" fill="#eaf4ff" stroke="#0f766e" stroke-width="2.5" stroke-linejoin="round"/>
+                <path d="M15 26 h18" stroke="#0f766e" stroke-width="2"/>
+                <circle cx="20" cy="32" r="1.8" fill="#f59e0b"/><circle cx="26" cy="35" r="1.8" fill="#f59e0b"/><circle cx="23" cy="39" r="1.8" fill="#f59e0b"/>
+              </svg>
+            </div>
+            <h3>Citric-acid leaching</h3>
+            <p class="tag">Acid washing</p>
+            <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg><span>photo</span></div>
+            <div class="node-detail"><div class="inner">
+              <p><strong>What happens:</strong> shells are soaked in a citric-acid solution to dissolve the mineral ash (K, Ca, Mg carbonates) trapped inside the shell pores.</p>
+              <p><strong>Purpose:</strong> remove ash that would otherwise cause side reactions and high impedance in the finished battery.</p>
+            </div></div>
+            <div class="expand-hint">click to expand</div>
+          </article>
+
+          <!-- STEP 3 -->
+          <article class="node">
+            <span class="node-num">3</span>
+            <div class="node-icon">
+              <svg viewBox="0 0 48 48">
+                <path d="M10 22 c0 -4 3 -7 3 -7 s3 3 3 7 a3 3 0 0 1 -6 0 Z" fill="#38bdf8"/>
+                <path d="M18 22 c0 -4 3 -7 3 -7 s3 3 3 7 a3 3 0 0 1 -6 0 Z" fill="#38bdf8"/>
+                <path d="M26 22 c0 -4 3 -7 3 -7 s3 3 3 7 a3 3 0 0 1 -6 0 Z" fill="#38bdf8"/>
+                <circle cx="33" cy="34" r="7" fill="#fbbf24" stroke="#b45309" stroke-width="2"/>
+                <g stroke="#b45309" stroke-width="2" stroke-linecap="round">
+                  <line x1="33" y1="23" x2="33" y2="19"/><line x1="33" y1="45" x2="33" y2="49"/>
+                  <line x1="22" y1="34" x2="18" y2="34"/><line x1="44" y1="34" x2="48" y2="34"/>
+                </g>
+              </svg>
+            </div>
+            <h3>Rinse &amp; oven drying</h3>
+            <p class="tag">Rinsing · drying to constant mass</p>
+            <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg><span>photo</span></div>
+            <div class="node-detail"><div class="inner">
+              <p><strong>What happens:</strong> residual acid is rinsed out of the pores until the rinse water is neutral (pH≈7), then the shells are oven-dried to constant mass.</p>
+              <p><strong>Purpose:</strong> remove leftover acid (protects the furnace) and fully dry the shells so they grind cleanly.</p>
+            </div></div>
+            <div class="expand-hint">click to expand</div>
+          </article>
+
+          <!-- STEP 4 -->
+          <article class="node">
+            <span class="node-num">4</span>
+            <div class="node-icon">
+              <svg viewBox="0 0 48 48">
+                <circle cx="24" cy="28" r="14" fill="#eef2f7" stroke="#334155" stroke-width="2.5"/>
+                <circle cx="18" cy="26" r="5" fill="#94a3b8"/><circle cx="28" cy="22" r="4" fill="#cbd5e1"/><circle cx="26" cy="32" r="4.5" fill="#64748b"/>
+                <path d="M38 12 a12 12 0 0 1 0 16" fill="none" stroke="#0f766e" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="3 3"/>
+              </svg>
+            </div>
+            <h3>Ball-mill grinding</h3>
+            <p class="tag">Fine powder · 100–200 mesh</p>
+            <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg><span>photo</span></div>
+            <div class="node-detail"><div class="inner">
+              <p><strong>What happens:</strong> the dried walnut-shell pieces are ground in a planetary ball mill into a fine, uniform powder (100–200 mesh).</p>
+              <p><strong>Purpose:</strong> control particle size so carbonization and foaming happen uniformly.</p>
+            </div></div>
+            <div class="expand-hint">click to expand</div>
+          </article>
+
+          <!-- STEP 5 -->
+          <article class="node">
+            <span class="node-num">5</span>
+            <div class="node-icon">
+              <svg viewBox="0 0 48 48">
+                <text x="5" y="9" font-size="7" fill="#2563eb" font-weight="700">Ar</text>
+                <path d="M6 12 h10" stroke="#2563eb" stroke-width="2"/>
+                <polygon points="16,10 20,12 16,14" fill="#2563eb"/>
+                <rect x="6" y="14" width="36" height="14" rx="7" fill="#eef2f7" stroke="#334155" stroke-width="2.5"/>
+                <path d="M20 22 h8 l-1.5 3 h-5 Z" fill="#3f4752"/>
+                <circle cx="22" cy="22" r="1" fill="#f59e0b"/><circle cx="24.5" cy="22" r="1" fill="#f59e0b"/><circle cx="27" cy="22" r="1" fill="#f59e0b"/>
+                <path d="M20 40 c0 -4 3 -6 3 -6 s3 2 3 6 a3 3 0 0 1 -6 0 Z" fill="#f97316"/>
+              </svg>
+            </div>
+            <h3>Carbonization (tube furnace)</h3>
+            <p class="tag">Inert gas · 800 °C</p>
+            <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg><span>photo</span></div>
+            <div class="node-detail"><div class="inner">
+              <p><strong>What happens:</strong> the powder is heated to 800 °C under high-purity argon (5 °C/min, hold 2 h) inside a tube furnace.</p>
+              <p><strong>Purpose:</strong> pyrolyze the biomass into black, amorphous hard carbon with the disordered structure that stores sodium.</p>
+            </div></div>
+            <div class="expand-hint">click to expand</div>
+          </article>
+
+          <!-- STEP 6 -->
+          <article class="node">
+            <span class="node-num">6</span>
+            <div class="node-icon">
+              <svg viewBox="0 0 48 48">
+                <g stroke="#334155" stroke-width="2" fill="#eef2f7">
+                  <rect x="8"  y="12" width="6" height="22" rx="3"/>
+                  <rect x="17" y="8"  width="6" height="26" rx="3"/>
+                  <rect x="26" y="12" width="6" height="22" rx="3"/>
+                  <rect x="35" y="16" width="6" height="18" rx="3"/>
+                </g>
+                <rect x="9.5"  y="20" width="3" height="12" fill="#0f766e"/>
+                <rect x="18.5" y="18" width="3" height="14" fill="#67c2b4"/>
+                <rect x="27.5" y="22" width="3" height="10" fill="#67c2b4"/>
+                <rect x="36.5" y="24" width="3" height="8"  fill="#0f766e"/>
+              </svg>
+            </div>
+            <h3>Sample grouping</h3>
+            <p class="tag">C0 · C15 · C25 · C35</p>
+            <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg><span>photo</span></div>
+            <div class="node-detail"><div class="inner">
+              <p><strong>What happens:</strong> the carbon powder is split into 4 batches — C0 (untreated control), C15, C25 and C35 — ready for foaming treatment.</p>
+              <p><strong>Purpose:</strong> isolate foaming pressure as the single variable so its effect on pore structure can be measured.</p>
+            </div></div>
+            <div class="expand-hint">click to expand</div>
+          </article>
+
+          <!-- STEP 7 (KEY — core innovation) -->
+          <article class="node key">
+            <span class="node-num">7</span>
+            <span class="key-badge">★ Core innovation</span>
+            <div class="node-icon">
+              <svg viewBox="0 0 48 48">
+                <rect x="15" y="14" width="18" height="24" rx="7" fill="#f4f1fb" stroke="#7c3aed" stroke-width="2.5"/>
+                <circle cx="24" cy="10" r="6" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+                <line x1="24" y1="10" x2="27" y2="7" stroke="#7c3aed" stroke-width="1.6" stroke-linecap="round"/>
+                <line x1="8" y1="18" x2="15" y2="18" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="21" cy="24" r="2.2" fill="#7c3aed"/>
+                <circle cx="27" cy="28" r="2.2" fill="#a78bfa"/>
+                <circle cx="22" cy="32" r="2.2" fill="#a78bfa"/>
+              </svg>
+            </div>
+            <h3>Supercritical CO₂ foaming</h3>
+            <p class="tag">Core treatment · 15 / 25 / 35 MPa</p>
+            <!-- TODO: replace with your real lab photo -->
+            <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg><span>photo</span></div>
+            <div class="node-detail"><div class="inner">
+              <p><strong>What happens:</strong> the C15 / C25 / C35 samples are loaded into the supercritical reactor and treated with CO₂ at 15 / 25 / 35 MPa.</p>
+              <p><strong>Purpose:</strong> tune the internal pore structure of the hard carbon by adjusting foaming pressure — this is the main variable we study.</p>
+            </div></div>
+            <div class="expand-hint">click to expand</div>
+          </article>
+
+          <!-- STEP 8 -->
+          <article class="node">
+            <span class="node-num">8</span>
+            <div class="node-icon">
+              <svg viewBox="0 0 48 48">
+                <circle cx="20" cy="20" r="11" fill="none" stroke="#334155" stroke-width="3"/>
+                <path d="M28 28 L38 38" stroke="#334155" stroke-width="3" stroke-linecap="round"/>
+                <path d="M12 20 q3 -6 6 0 t6 0 t4 0" fill="none" stroke="#0f766e" stroke-width="2"/>
+              </svg>
+            </div>
+            <h3>Material characterization</h3>
+            <p class="tag">SEM · BET · XRD</p>
+            <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg><span>photo</span></div>
+            <div class="node-detail"><div class="inner">
+              <p><strong>What happens:</strong> SEM (morphology), BET (pore volume &amp; surface area) and XRD (carbon disorder) are measured, with Raman as an option.</p>
+              <p><strong>Purpose:</strong> see how foaming pressure changes pore size and distribution — the project's core structural evidence.</p>
+            </div></div>
+            <div class="expand-hint">click to expand</div>
+          </article>
+
+          <!-- STEP 9 -->
+          <article class="node">
+            <span class="node-num">9</span>
+            <div class="node-icon">
+              <svg viewBox="0 0 48 48">
+                <circle cx="24" cy="24" r="16" fill="#eef2f7" stroke="#334155" stroke-width="2.5"/>
+                <line x1="9" y1="20" x2="39" y2="20" stroke="#94a3b8" stroke-width="1.5"/>
+                <line x1="9" y1="28" x2="39" y2="28" stroke="#94a3b8" stroke-width="1.5"/>
+                <line x1="12" y1="24" x2="36" y2="24" stroke="#0f766e" stroke-width="2.5"/>
+                <line x1="24" y1="8" x2="24" y2="14" stroke="#334155" stroke-width="2.5"/>
+                <line x1="24" y1="34" x2="24" y2="40" stroke="#334155" stroke-width="2.5"/>
+              </svg>
+            </div>
+            <h3>Electrode &amp; CR2032 half-cell</h3>
+            <p class="tag">Fabrication · coin-cell assembly</p>
+            <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg><span>photo</span></div>
+            <div class="node-detail"><div class="inner">
+              <p><strong>What happens:</strong> working electrodes (carbon : CMC : SBR = 90 : 5 : 5 on Cu foil) are made, then CR2032 Na half-cells are assembled in a glovebox with 1 M NaPF₆ in DME.</p>
+              <p><strong>Purpose:</strong> build real sodium-ion half-cells to test how the carbon stores and releases sodium.</p>
+            </div></div>
+            <div class="expand-hint">click to expand</div>
+          </article>
+
+          <!-- STEP 10 -->
+          <article class="node">
+            <span class="node-num">10</span>
+            <div class="node-icon">
+              <svg viewBox="0 0 48 48">
+                <line x1="8" y1="40" x2="44" y2="40" stroke="#334155" stroke-width="2.5"/>
+                <line x1="8" y1="40" x2="8" y2="6" stroke="#334155" stroke-width="2.5"/>
+                <path d="M10 24 C12 8 18 40 22 24 C26 8 32 40 36 24 C40 8 44 30 44 24" fill="none" stroke="#0f766e" stroke-width="2.5"/>
+                <path d="M8 24 H44" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="3 3"/>
+              </svg>
+            </div>
+            <h3>Electrochemical testing</h3>
+            <p class="tag">GCD · CV · EIS</p>
+            <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg><span>photo</span></div>
+            <div class="node-detail"><div class="inner">
+              <p><strong>What happens:</strong> galvanostatic cycling (GCD), cyclic voltammetry (CV) and EIS are run to measure capacity and initial Coulombic efficiency (ICE).</p>
+              <p><strong>Purpose:</strong> quantify reversible capacity, plateau capacity and ICE to test the scientific hypothesis.</p>
+            </div></div>
+            <div class="expand-hint">click to expand</div>
+          </article>
+
+        </div>
+      </div>
+      <p class="timeline-note">Scroll → to see all 10 steps · click a card to expand / collapse its description.</p>
+    </div>
+  </section>
+
+  <!-- ======================= FOOTER ======================= -->
+  <footer>
+    <p class="disclaimer">Note: Animations are simplified scientific schematic diagrams, not precise physical simulation.</p>
+  </footer>
+
+</div><!-- /.page -->
+
+<script>
+/* ============================================================
+   SECTION 1 — battery animation
+   ============================================================ */
+(function () {
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+
+  // ---- Tweak this to change how fast everything moves (cycles per second) ----
+  var SPEED = 0.22; // ~4.5 s per full traversal
+
+  // Electron path along the external circuit (discharge direction: anode -> cathode).
+  var DISCHARGE_PATH = [[145,150],[145,55],[452,55],[548,55],[855,55],[855,150]];
+  var CHARGE_PATH    = DISCHARGE_PATH.slice().reverse();
+
+  // Ion travel corridor through the electrolyte/separator, plus horizontal lanes.
+  var ION_START = 226, ION_END = 774;
+  var ION_LANES = [196, 240, 284, 328];
+  var ION_COUNT = 6, ELECTRON_COUNT = 8;
+
+  // DOM references
+  var ionLayer = document.getElementById('ionLayer');
+  var electronLayer = document.getElementById('electronLayer');
+  var bulb = document.getElementById('bulb');
+  var charger = document.getElementById('charger');
+  var naStore = document.getElementById('naStore');
+  var arrow = document.getElementById('flowArrow');
+  var statusEl = document.getElementById('status');
+  var btnDis = document.getElementById('btnDischarge');
+  var btnChg = document.getElementById('btnCharge');
+  var anodeHit = document.getElementById('anodeHit');
+  var tooltip = document.getElementById('tooltip');
+  var wrap = document.getElementById('diagramWrap');
+
+  var state = { mode: null, t: 0, raf: null, last: 0 };
+  var ions = [], electrons = [];
+
+  // Build the moving particles once.
+  function createParticles() {
+    for (var i = 0; i < ION_COUNT; i++) {
+      var u = document.createElementNS(SVG_NS, 'use');
+      u.setAttribute('href', '#naIon');
+      ions.push({ el: u, lane: i % ION_LANES.length, offset: (i * 0.18) % 1 });
+      ionLayer.appendChild(u);
+    }
+    for (var j = 0; j < ELECTRON_COUNT; j++) {
+      var e = document.createElementNS(SVG_NS, 'use');
+      e.setAttribute('href', '#electron');
+      electrons.push({ el: e, offset: j / ELECTRON_COUNT });
+      electronLayer.appendChild(e);
+    }
+    ionLayer.style.opacity = 0;
+    electronLayer.style.opacity = 0;
+  }
+
+  // Position of a point at fraction f along a polyline path.
+  function pointAlongPath(pts, f) {
+    var segs = [], total = 0, i, dx, dy, len;
+    for (i = 0; i < pts.length - 1; i++) {
+      dx = pts[i+1][0] - pts[i][0];
+      dy = pts[i+1][1] - pts[i][1];
+      len = Math.sqrt(dx*dx + dy*dy);
+      segs.push({ a: pts[i], b: pts[i+1], len: len, start: total });
+      total += len;
+    }
+    var target = f * total;
+    for (i = 0; i < segs.length; i++) {
+      var s = segs[i];
+      if (target <= s.start + s.len || i === segs.length - 1) {
+        var u = (target - s.start) / s.len;
+        return [s.a[0] + (s.b[0] - s.a[0]) * u, s.a[1] + (s.b[1] - s.a[1]) * u];
+      }
+    }
+    return pts[pts.length - 1];
+  }
+
+  // Reposition every particle for the current phase and mode.
+  function update() {
+    var f, p, xy;
+    if (state.mode === 'discharge') {
+      for (var i = 0; i < ions.length; i++) {
+        p = ions[i];
+        f = (state.t + p.offset) % 1;
+        p.el.setAttribute('x', ION_START + f * (ION_END - ION_START));
+        p.el.setAttribute('y', ION_LANES[p.lane]);
+      }
+      for (var j = 0; j < electrons.length; j++) {
+        p = electrons[j];
+        f = (state.t + p.offset) % 1;
+        xy = pointAlongPath(DISCHARGE_PATH, f);
+        p.el.setAttribute('x', xy[0]);
+        p.el.setAttribute('y', xy[1]);
+      }
+    } else if (state.mode === 'charge') {
+      for (var k = 0; k < ions.length; k++) {
+        p = ions[k];
+        f = (state.t + p.offset) % 1;
+        p.el.setAttribute('x', ION_END - f * (ION_END - ION_START));
+        p.el.setAttribute('y', ION_LANES[p.lane]);
+      }
+      for (var m = 0; m < electrons.length; m++) {
+        p = electrons[m];
+        f = (state.t + p.offset) % 1;
+        xy = pointAlongPath(CHARGE_PATH, f);
+        p.el.setAttribute('x', xy[0]);
+        p.el.setAttribute('y', xy[1]);
+      }
+    }
+  }
+
+  function frame(ts) {
+    if (!state.mode) return;
+    if (!state.last) state.last = ts;
+    var dt = (ts - state.last) / 1000;
+    state.last = ts;
+    state.t = (state.t + dt * SPEED) % 1;
+    update();
+    state.raf = requestAnimationFrame(frame);
+  }
+
+  // Reset state and start (or re-start) an animation mode.
+  function setMode(mode) {
+    if (state.raf) cancelAnimationFrame(state.raf);
+    state.mode = mode;
+    state.t = 0;
+    state.last = 0;
+
+    ionLayer.style.opacity = 1;
+    electronLayer.style.opacity = 1;
+    update(); // snap to starting positions
+
+    if (mode === 'discharge') {
+      statusEl.textContent = 'DISCHARGE: Spontaneous reaction. Battery outputs electrical energy.';
+      statusEl.className = 'status discharge';
+      bulb.style.display = '';
+      charger.style.display = 'none';
+      naStore.style.opacity = 0;         // Na leaves the anode pores
+      arrow.setAttribute('transform', 'translate(432,55)');            // electrons -> right
+      btnDis.classList.add('active');
+      btnChg.classList.remove('active');
+    } else {
+      statusEl.textContent = 'CHARGE: Non-spontaneous reaction, consumes external power. Sodium ions are stored inside porous carbon material.';
+      statusEl.className = 'status charge';
+      bulb.style.display = 'none';
+      charger.style.display = '';
+      naStore.style.opacity = 1;         // Na fills the anode pores
+      arrow.setAttribute('transform', 'translate(568,55) scale(-1,1)'); // electrons <- left
+      btnChg.classList.add('active');
+      btnDis.classList.remove('active');
+    }
+
+    state.raf = requestAnimationFrame(frame);
+  }
+
+  btnDis.addEventListener('click', function () { setMode('discharge'); });
+  btnChg.addEventListener('click', function () { setMode('charge'); });
+
+  // ---- Tooltip on hover over the carbon electrode ----
+  function positionTooltip() {
+    var r = anodeHit.getBoundingClientRect();
+    var wr = wrap.getBoundingClientRect();
+    tooltip.style.left = (r.left - wr.left + r.width / 2) + 'px';
+    tooltip.style.top  = (r.top  - wr.top - 8) + 'px';
+  }
+  anodeHit.addEventListener('mouseenter', function () {
+    positionTooltip();
+    tooltip.classList.add('show');
+  });
+  anodeHit.addEventListener('mouseleave', function () {
+    tooltip.classList.remove('show');
+  });
+  // keep the tooltip near the electrode if the window resizes while shown
+  window.addEventListener('resize', function () {
+    if (tooltip.classList.contains('show')) positionTooltip();
+  });
+
+  createParticles();
+})();
+
+
+/* ============================================================
+   SECTION 2 — supercritical CO₂ foaming animation
+   ============================================================ */
+(function () {
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  var DURATION = 13;   // seconds for the full foaming sequence (tweak to go faster/slower)
+
+  var btn       = document.getElementById('btnFoam');
+  var caption   = document.getElementById('foamCaption');
+  var stageTag  = document.getElementById('foamStageTag');
+  var needle    = document.getElementById('foamNeedle');
+  var pressText = document.getElementById('foamPressText');
+  var tempText  = document.getElementById('foamTempText');
+  var bubbleLayer = document.getElementById('foamBubbleLayer');
+  var poreLayer   = document.getElementById('foamPoreLayer');
+  var ringLayer   = document.getElementById('foamRingLayer');
+  var carbonHit   = document.getElementById('foamCarbonHit');
+  var tooltip     = document.getElementById('foamTooltip');
+  var wrap        = document.getElementById('foamWrap');
+
+  // CO₂ gas (grey) -> supercritical fluid (violet) RGB
+  var GREY = [148, 163, 184], VIOLET = [124, 58, 237];
+
+  var state = { mode: 'idle', p: 0, t: 0, raf: null, last: 0 };
+  var lastStage = -2;
+
+  // ---- small math helpers ----
+  function clamp01(x){ return x < 0 ? 0 : (x > 1 ? 1 : x); }
+  function easeIn(t){ return t * t; }
+  // classic "pop" easing: 0 -> 1 with a gentle overshoot, for the pores bursting open
+  function easeOutBack(t){ var c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); }
+  function lerp(a, b, t){ return a + (b - a) * t; }
+  function lerpColor(c1, c2, t){
+    return 'rgb(' + Math.round(lerp(c1[0], c2[0], t)) + ',' + Math.round(lerp(c1[1], c2[1], t)) + ',' + Math.round(lerp(c1[2], c2[2], t)) + ')';
+  }
+
+  // Running-sequence stage (0..4). Idle (mode 'idle') is handled as -1.
+  function foamStage(p){
+    if (p < 0.22) return 0;  // heating / pressurizing
+    if (p < 0.34) return 1;  // crossing the critical point
+    if (p < 0.62) return 2;  // permeation into the carbon
+    if (p < 0.82) return 3;  // rapid pressure release
+    return 4;                // result
+  }
+
+  var CAPTIONS = [
+    'Gradually raising temperature &amp; pressure inside the vessel…',
+    'Temperature &amp; pressure cross the critical point — CO₂ becomes a supercritical fluid.<br><span class="soft">Supercritical fluid: gas-like penetration + liquid-like solvation — it can seep deep inside the porous carbon.</span>',
+    'Supercritical CO₂ permeates into the internal voids of the hard-carbon particles.',
+    'Rapid pressure release — the CO₂ inside expands quickly and pushes open new pores in the carbon framework.',
+    'Result: modified, hierarchical pore structure — tailored for sodium-ion storage.'
+  ];
+
+  // ---- create CO₂ bubbles (grey gas that turns violet when supercritical) ----
+  var bubbles = [];
+  var FLOAT = [
+    [360,175],[430,160],[500,150],[570,165],[640,180],[600,240],[380,250],[470,210]
+  ];
+  var PERM = [ // [startX, startY, targetX, targetY] — these seep INTO the particles
+    [390,240,388,322],[430,260,415,330],[520,250,500,336],[560,255,545,340],[600,235,612,322],[640,260,630,330]
+  ];
+  FLOAT.forEach(function (pos, i) {
+    var c = document.createElementNS(SVG_NS, 'circle');
+    c.setAttribute('r', 6);
+    bubbleLayer.appendChild(c);
+    bubbles.push({ el: c, x0: pos[0], y0: pos[1], role: 'float', amp: 5 + (i % 3) * 2, freq: 0.6 + (i % 4) * 0.2, phase: i * 0.7 });
+  });
+  PERM.forEach(function (pos, i) {
+    var c = document.createElementNS(SVG_NS, 'circle');
+    c.setAttribute('r', 6);
+    bubbleLayer.appendChild(c);
+    bubbles.push({ el: c, x0: pos[0], y0: pos[1], role: 'permeate', tx: pos[2], ty: pos[3], amp: 4, freq: 0.7, phase: i * 1.1 });
+  });
+
+  // ---- create the NEW pores that open up during rapid release ----
+  var newPores = [];
+  var PORE_DEFS = [
+    [378,300,7],[408,342,8],[388,352,6],[416,318,7],
+    [488,330,8],[512,300,7],[508,356,9],[492,366,6],
+    [600,310,7],[626,344,8],[606,352,6],[634,318,7]
+  ];
+  PORE_DEFS.forEach(function (d) {
+    var c = document.createElementNS(SVG_NS, 'circle');
+    c.setAttribute('cx', d[0]); c.setAttribute('cy', d[1]); c.setAttribute('r', 0);
+    c.setAttribute('fill', '#8fd6c9'); c.setAttribute('stroke', '#0f766e'); c.setAttribute('stroke-width', '1.5');
+    c.setAttribute('opacity', 0);
+    poreLayer.appendChild(c);
+    newPores.push({ el: c, cx: d[0], cy: d[1], r: d[2] });
+  });
+
+  // ---- expansion rings (visible only during rapid release) ----
+  var rings = [];
+  [[390,325],[500,340],[610,325]].forEach(function (ctr) {
+    var c = document.createElementNS(SVG_NS, 'circle');
+    c.setAttribute('cx', ctr[0]); c.setAttribute('cy', ctr[1]); c.setAttribute('r', 40);
+    c.setAttribute('fill', 'none'); c.setAttribute('stroke', '#7c3aed'); c.setAttribute('stroke-width', '3');
+    c.setAttribute('opacity', 0);
+    ringLayer.appendChild(c);
+    rings.push({ el: c });
+  });
+
+  // pressure (MPa) and temperature (°C) as functions of progress p
+  function pressureAt(p){
+    if (state.mode === 'idle') return 0.1;
+    if (p < 0.22) return lerp(0.1, 25, p / 0.22);
+    if (p < 0.62) return 25;
+    if (p < 0.82) return lerp(25, 0.1, (p - 0.62) / 0.20);
+    return 0.1;
+  }
+  function temperatureAt(p){
+    if (state.mode === 'idle') return 25;
+    if (p < 0.22) return lerp(25, 70, p / 0.22);
+    if (p < 0.82) return 70;
+    return lerp(70, 25, (p - 0.82) / 0.18);
+  }
+
+  function renderFoam(){
+    var p = state.p, t = state.t;
+    var stage = (state.mode === 'idle') ? -1 : foamStage(p);
+    var tColor = (state.mode === 'idle') ? 0 : clamp01((p - 0.22) / 0.12);
+
+    // bubbles
+    bubbles.forEach(function (b) {
+      var x, y, op = 1;
+      if (b.role === 'float') {
+        x = b.x0 + Math.sin(t * b.freq + b.phase) * b.amp;
+        y = b.y0 + Math.cos(t * b.freq * 0.8 + b.phase) * b.amp * 0.5;
+      } else {
+        var tt = (stage >= 2) ? clamp01((p - 0.34) / 0.28) : 0;
+        if (tt <= 0) { // before permeation: drift like the others
+          x = b.x0 + Math.sin(t * b.freq + b.phase) * b.amp;
+          y = b.y0 + Math.cos(t * b.freq * 0.8 + b.phase) * b.amp * 0.5;
+        } else {
+          x = lerp(b.x0, b.tx, easeIn(tt));
+          y = lerp(b.y0, b.ty, easeIn(tt));
+          op = 1 - tt * 0.95;   // fade as it sinks into the particle
+        }
+      }
+      b.el.setAttribute('cx', x);
+      b.el.setAttribute('cy', y);
+      b.el.setAttribute('opacity', op);
+      b.el.setAttribute('fill', lerpColor(GREY, VIOLET, tColor));
+      b.el.setAttribute('stroke', lerpColor([100,116,139],[91,33,182], tColor));
+      b.el.setAttribute('stroke-width', '1.2');
+    });
+
+    // newly-formed pores (grow during release, then stay)
+    newPores.forEach(function (np) {
+      var r, op;
+      if (stage >= 3) {
+        var tt = clamp01((p - 0.62) / 0.20);
+        r = np.r * easeOutBack(tt);
+        op = clamp01(tt * 1.6);
+      } else { r = 0; op = 0; }
+      np.el.setAttribute('r', r);
+      np.el.setAttribute('opacity', op);
+    });
+
+    // expansion rings (during release only)
+    rings.forEach(function (rg) {
+      var r, op;
+      if (stage === 3) {
+        var tt = clamp01((p - 0.62) / 0.20);
+        r = 40 + tt * 80;
+        op = (1 - tt) * 0.75;
+      } else { r = 40; op = 0; }
+      rg.el.setAttribute('r', r);
+      rg.el.setAttribute('opacity', op);
+    });
+
+    // pressure & temperature readouts
+    var MPa = pressureAt(p);
+    pressText.textContent = MPa.toFixed(1) + ' MPa';
+    tempText.textContent = temperatureAt(p).toFixed(0) + ' °C';
+    var angle = -55 + ((MPa - 0.1) / (25 - 0.1)) * 110;
+    needle.setAttribute('transform', 'rotate(' + angle.toFixed(1) + ' 180 205)');
+
+    // stage tag + caption (only update when the stage changes)
+    if (stage !== lastStage) {
+      lastStage = stage;
+      var tag, tagFill;
+      if (stage <= 0)      { tag = 'CO₂ gas'; tagFill = '#475569'; }
+      else if (stage <= 2) { tag = 'Supercritical CO₂'; tagFill = '#7c3aed'; }
+      else if (stage === 3){ tag = 'Rapid release!'; tagFill = '#dc2626'; }
+      else                 { tag = 'Hierarchical pores ✓'; tagFill = '#0f766e'; }
+      stageTag.textContent = tag;
+      stageTag.setAttribute('fill', tagFill);
+
+      var cap, cls = 'foam-caption';
+      if (stage < 0) cap = 'CO₂ gas at normal temperature &amp; pressure (T &amp; P). Press the button to start foaming.';
+      else cap = CAPTIONS[stage];
+      if (stage === 4) cls += ' result';
+      caption.className = cls;
+      caption.innerHTML = cap;
+    }
+  }
+
+  function frame(ts) {
+    if (state.mode !== 'running') return;
+    if (!state.last) state.last = ts;
+    var dt = (ts - state.last) / 1000;
+    state.last = ts;
+    state.t += dt;
+    state.p += dt / DURATION;
+    if (state.p >= 1) state.p = 1;
+    renderFoam();
+    if (state.p >= 1) { state.mode = 'done'; return; }
+    state.raf = requestAnimationFrame(frame);
+  }
+
+  function start() {
+    if (state.raf) cancelAnimationFrame(state.raf);
+    state.mode = 'running'; state.p = 0; state.t = 0; state.last = 0; lastStage = -2;
+    btn.textContent = 'Reset Foaming Process';
+    btn.classList.add('running');
+    renderFoam();
+    state.raf = requestAnimationFrame(frame);
+  }
+
+  function reset() {
+    if (state.raf) cancelAnimationFrame(state.raf);
+    state.mode = 'idle'; state.p = 0; state.t = 0; lastStage = -2;
+    btn.textContent = 'Start Foaming Process';
+    btn.classList.remove('running');
+    renderFoam();
+  }
+
+  btn.addEventListener('click', function () {
+    if (state.mode === 'idle') start(); else reset();
+  });
+
+  // ---- tooltip on hover over the carbon particles ----
+  function positionTooltip() {
+    var r = carbonHit.getBoundingClientRect();
+    var wr = wrap.getBoundingClientRect();
+    tooltip.style.left = (r.left - wr.left + r.width / 2) + 'px';
+    tooltip.style.top  = (r.top  - wr.top - 8) + 'px';
+  }
+  carbonHit.addEventListener('mouseenter', function () { positionTooltip(); tooltip.classList.add('show'); });
+  carbonHit.addEventListener('mouseleave', function () { tooltip.classList.remove('show'); });
+  window.addEventListener('resize', function () { if (tooltip.classList.contains('show')) positionTooltip(); });
+
+  renderFoam(); // initial idle render
+})();
+
+
+/* ============================================================
+   SECTION 3 — experiment roadmap (click a card to expand)
+   ============================================================ */
+(function () {
+  var nodes = Array.prototype.slice.call(document.querySelectorAll('.node'));
+
+  nodes.forEach(function (node) {
+    node.addEventListener('click', function () {
+      var isOpen = node.classList.contains('open');
+      // close all cards first (single-open behavior)
+      nodes.forEach(function (n) { n.classList.remove('open'); });
+      // then open the clicked one (or leave it closed if it was already open)
+      if (!isOpen) node.classList.add('open');
+    });
+  });
+})();
+</script>
+</body>
+</html>
