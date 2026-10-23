@@ -14,7 +14,6 @@
     * colors          -> the :root block in the style section
     * animation speed -> the "SPEED" constant near the top of the script section
     * texts           -> search the section you want, strings are plain text
-    * real lab photos -> search "TODO: replace with your real lab photo"
 -->
 
 <style>
@@ -199,16 +198,6 @@
 
   .node h3{ font-size:15.5px; margin:6px 0 3px; line-height:1.25; }
   .node .tag{ font-size:12.5px; color:var(--muted); margin:0 0 10px; }
-
-  /* placeholder image box — REPLACE WITH REAL LAB PHOTO (see comment in HTML) */
-  .ph{
-    height:74px; margin:0 0 10px; border-radius:10px; border:1.5px dashed #c3cdd9;
-    background:repeating-linear-gradient(45deg,#f6f8fb,#f6f8fb 8px,#eef2f7 8px,#eef2f7 16px);
-    display:flex; align-items:center; justify-content:center; gap:6px;
-    color:#9aa7b8; font-size:12px; overflow:hidden;
-  }
-  .ph svg{ width:20px; height:20px; }
-  .ph img{ width:100%; height:100%; object-fit:cover; display:block; }
 
   .node-detail{
     max-height:0; overflow:hidden; text-align:left; font-size:13px; color:#334155;
@@ -552,12 +541,6 @@
             </div>
             <h3>Raw walnut shells</h3>
             <p class="tag">Collect &amp; clean</p>
-            <!-- TODO: replace with your real lab photo, e.g.:
-                 <div class="ph"><img src="step1-walnut-shells.jpg" alt="Raw walnut shells"></div> -->
-            <div class="ph">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg>
-              <span>photo</span>
-            </div>
             <div class="node-detail"><div class="inner">
               <p><strong>What happens:</strong> waste walnut shells are collected and physically cleaned — the inner membrane, leftover kernel and dirt are stripped away.</p>
               <p><strong>Purpose:</strong> obtain clean, impurity-free biomass before any chemical or thermal steps.</p>
@@ -577,7 +560,6 @@
             </div>
             <h3>Citric-acid leaching</h3>
             <p class="tag">Acid washing</p>
-            <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg><span>photo</span></div>
             <div class="node-detail"><div class="inner">
               <p><strong>What happens:</strong> shells are soaked in a citric-acid solution to dissolve the mineral ash (K, Ca, Mg carbonates) trapped inside the shell pores.</p>
               <p><strong>Purpose:</strong> remove ash that would otherwise cause side reactions and high impedance in the finished battery.</p>
@@ -602,7 +584,6 @@
             </div>
             <h3>Rinse &amp; oven drying</h3>
             <p class="tag">Rinsing · drying to constant mass</p>
-            <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg><span>photo</span></div>
             <div class="node-detail"><div class="inner">
               <p><strong>What happens:</strong> residual acid is rinsed out of the pores until the rinse water is neutral (pH≈7), then the shells are oven-dried to constant mass.</p>
               <p><strong>Purpose:</strong> remove leftover acid (protects the furnace) and fully dry the shells so they grind cleanly.</p>
@@ -622,7 +603,6 @@
             </div>
             <h3>Ball-mill grinding</h3>
             <p class="tag">Fine powder · 100–200 mesh</p>
-            <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg><span>photo</span></div>
             <div class="node-detail"><div class="inner">
               <p><strong>What happens:</strong> the dried walnut-shell pieces are ground in a planetary ball mill into a fine, uniform powder (100–200 mesh).</p>
               <p><strong>Purpose:</strong> control particle size so carbonization and foaming happen uniformly.</p>
@@ -646,7 +626,6 @@
             </div>
             <h3>Carbonization (tube furnace)</h3>
             <p class="tag">Inert gas · 800 °C</p>
-            <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg><span>photo</span></div>
             <div class="node-detail"><div class="inner">
               <p><strong>What happens:</strong> the powder is heated to 800 °C under high-purity argon (5 °C/min, hold 2 h) inside a tube furnace.</p>
               <p><strong>Purpose:</strong> pyrolyze the biomass into black, amorphous hard carbon with the disordered structure that stores sodium.</p>
@@ -673,7 +652,6 @@
             </div>
             <h3>Sample grouping</h3>
             <p class="tag">C0 · C15 · C25 · C35</p>
-            <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg><span>photo</span></div>
             <div class="node-detail"><div class="inner">
               <p><strong>What happens:</strong> the carbon powder is split into 4 batches — C0 (untreated control), C15, C25 and C35 — ready for foaming treatment.</p>
               <p><strong>Purpose:</strong> isolate foaming pressure as the single variable so its effect on pore structure can be measured.</p>
@@ -698,8 +676,6 @@
             </div>
             <h3>Supercritical CO₂ foaming</h3>
             <p class="tag">Core treatment · 15 / 25 / 35 MPa</p>
-            <!-- TODO: replace with your real lab photo -->
-            <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg><span>photo</span></div>
             <div class="node-detail"><div class="inner">
               <p><strong>What happens:</strong> the C15 / C25 / C35 samples are loaded into the supercritical reactor and treated with CO₂ at 15 / 25 / 35 MPa.</p>
               <p><strong>Purpose:</strong> tune the internal pore structure of the hard carbon by adjusting foaming pressure — this is the main variable we study.</p>
@@ -719,7 +695,6 @@
             </div>
             <h3>Material characterization</h3>
             <p class="tag">SEM · BET · XRD</p>
-            <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg><span>photo</span></div>
             <div class="node-detail"><div class="inner">
               <p><strong>What happens:</strong> SEM (morphology), BET (pore volume &amp; surface area) and XRD (carbon disorder) are measured, with Raman as an option.</p>
               <p><strong>Purpose:</strong> see how foaming pressure changes pore size and distribution — the project's core structural evidence.</p>
@@ -742,7 +717,6 @@
             </div>
             <h3>Electrode &amp; CR2032 half-cell</h3>
             <p class="tag">Fabrication · coin-cell assembly</p>
-            <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg><span>photo</span></div>
             <div class="node-detail"><div class="inner">
               <p><strong>What happens:</strong> working electrodes (carbon : CMC : SBR = 90 : 5 : 5 on Cu foil) are made, then CR2032 Na half-cells are assembled in a glovebox with 1 M NaPF₆ in DME.</p>
               <p><strong>Purpose:</strong> build real sodium-ion half-cells to test how the carbon stores and releases sodium.</p>
@@ -763,7 +737,6 @@
             </div>
             <h3>Electrochemical testing</h3>
             <p class="tag">GCD · CV · EIS</p>
-            <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M3 17l5-4 4 3 3-3 6 5"/></svg><span>photo</span></div>
             <div class="node-detail"><div class="inner">
               <p><strong>What happens:</strong> galvanostatic cycling (GCD), cyclic voltammetry (CV) and EIS are run to measure capacity and initial Coulombic efficiency (ICE).</p>
               <p><strong>Purpose:</strong> quantify reversible capacity, plateau capacity and ICE to test the scientific hypothesis.</p>
